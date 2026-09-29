@@ -92,14 +92,6 @@ ros2 launch kahuil_nav nav2.launch.py             # Nav2
 - Autonomous exploration: `ros2 launch kahuil_nav exploration.launch.py`
 - In RViz, set the Fixed Frame to `map` and send goals with **2D Goal Pose**.
 
-## Roadmap
-
-- [x] Phase 1: slam_toolbox + wheel odometry + lidar + Nav2
-- [x] Phase 2: RTAB-Map + ZED VIO/IMU fusion + Nav2
-- [x] Phase 3: 3D voxel costmap layer from the ZED point cloud
-- [ ] Localization-mode validation on a fixed map
-- [ ] OpenManipulator-X arm integration (single unified controller_manager)
-- [ ] Port the full stack to the tracked rescue robot
 
 ## Credits
 
@@ -109,4 +101,4 @@ ros2 launch kahuil_nav nav2.launch.py             # Nav2
 
 ## Author
 
-Eduardo Rey García Velasco
+Eduardo García
