@@ -1,0 +1,11 @@
+build/
+install/
+log/
+__pycache__/
+*.pyc
+*.db
+*.zip
+frames_*.pdf
+frames_*.gv
+.DS_Store
+.vscode/

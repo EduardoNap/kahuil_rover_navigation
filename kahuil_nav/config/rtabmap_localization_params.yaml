@@ -1,0 +1,41 @@
+rgbd_sync:
+  ros__parameters:
+    use_sim_time: false
+    approx_sync: true
+    approx_sync_max_interval: 0.05
+    queue_size: 30
+
+rtabmap:
+  ros__parameters:
+    use_sim_time: false
+    frame_id: base_footprint
+    odom_frame_id: odom
+    map_frame_id: map
+    publish_tf: true
+    subscribe_rgbd: true
+    approx_sync: true
+    # Depth feeds the 2D grid. Lidar is reserved for Nav2 local costmap only.
+    subscribe_scan: false
+
+    # --- 2D occupancy grid from ZED depth (must match rtabmap_params.yaml) ---
+    Grid/FromDepth: "true"
+    Grid/RangeMax: "5.0"
+    Grid/RayTracing: "true"
+    Grid/CellSize: "0.05"
+    Grid/MinGroundHeight: "-0.10"
+    Grid/MaxGroundHeight: "0.08"
+    Grid/MaxObstacleHeight: "0.70"
+    Grid/NoiseFilteringRadius: "0.05"
+    Grid/NoiseFilteringMinNeighbors: "2"
+    Grid/NormalsSegmentation: "false"
+
+    Reg/Force3DoF: "true"
+
+    Rtabmap/DetectionRate: "1.2"
+    RGBD/ProximityBySpace: "true"
+    RGBD/LoopClosureReextractFeatures: "true"
+    Vis/MinInliers: "25"
+
+    # --- Localization mode ---
+    Mem/IncrementalMemory: "false"
+    Mem/InitWMWithAllNodes: "true"

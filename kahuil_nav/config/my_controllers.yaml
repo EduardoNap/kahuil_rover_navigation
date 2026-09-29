@@ -1,0 +1,35 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 30
+    use_sim_time: false
+
+    diff_cont:
+      type: diff_drive_controller/DiffDriveController
+
+    joint_broad:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+
+diff_cont:
+  ros__parameters:
+    publish_rate: 50.0
+
+    base_frame_id: base_footprint
+
+    # Two motors / two encoders — front wheels are the controlled joints.
+    # Back wheels are mimic joints in URDF (visualization only).
+    left_wheel_names:  ['left_front_wheel_joint']
+    right_wheel_names: ['right_front_wheel_joint']
+
+    # Real robot measurements
+    wheel_separation: 0.90     # m — center-to-center, geometric. Tune up if turns under-rotate (skid-steer slip).
+    wheel_radius:     0.065    # m
+
+    # ZED VIO owns odom→base_footprint TF. diff_cont only publishes the /odom
+    # topic for diagnostics; setting enable_odom_tf:true here would fight ZED.
+    publish_odom: true
+    enable_odom_tf: false
+
+    # Optional safety
+    cmd_vel_timeout: 0.5
+    use_stamped_vel: false

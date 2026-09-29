@@ -1,0 +1,43 @@
+rgbd_sync:
+  ros__parameters:
+    use_sim_time: false
+    approx_sync: true
+    approx_sync_max_interval: 0.05  # Reject pairs with >50ms timestamp difference
+    queue_size: 30
+
+rtabmap:
+  ros__parameters:
+    use_sim_time: false
+    frame_id: base_footprint
+    odom_frame_id: odom
+    map_frame_id: map
+    publish_tf: true
+    subscribe_rgbd: true
+    approx_sync: true
+    # Depth feeds the 2D grid. Lidar is reserved for Nav2 local costmap only.
+    subscribe_scan: false
+
+    # --- 2D occupancy grid from ZED depth ---
+    Grid/FromDepth: "true"
+    Grid/RangeMax: "5.0"            # ZED depth reliable to ~5 m
+    Grid/RayTracing: "true"         # clear free space between robot and obstacle
+    Grid/CellSize: "0.05"           # 5 cm cells (Nav2 default)
+    # Heights are in base_footprint frame (z=0 is the ground).
+    # Course has 60 cm walls; 0.08 absorbs floor depth noise without swallowing
+    # low obstacles; 0.70 sits just above the wall top to filter ceiling clutter.
+    Grid/MinGroundHeight: "-0.10"
+    Grid/MaxGroundHeight: "0.10"
+    Grid/MaxObstacleHeight: "0.70"
+    # Drop sparse outlier points before grid update (cleans up fuzzy walls).
+    Grid/NoiseFilteringRadius: "0.05"
+    Grid/NoiseFilteringMinNeighbors: "2"
+    Grid/NormalsSegmentation: "false"  # simple flat-floor classification
+
+    # --- Force 2D for ground robot ---
+    Reg/Force3DoF: "true"
+
+    # --- Detection / loop closure tuning ---
+    Rtabmap/DetectionRate: "1.2"             # Hz; lower = more data per node
+    RGBD/ProximityBySpace: "true"            # use TF/odom proximity, not only vision
+    RGBD/LoopClosureReextractFeatures: "true"  # re-detect features when checking a candidate
+    Vis/MinInliers: "25"                     # reject thin RANSAC matches

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- RPLidar A1 mount.
+       Stacked on top of the ZED 2i (ZED top is roughly at z = 0.17 + 0.015 = 0.185).
+       lidar_link IS the scan frame (driver publishes /scan with frame_id=lidar_link),
+       and its origin sits at the scan plane; the visual cylinder hangs below it.
+
+       NOTE: physically orient the RPLidar so the cable / motor housing points
+       BACKWARD; angle 0 in /scan must point along +X (robot forward). -->
+
+  <xacro:property name="lidar_x"      value="-0.13"/>
+  <xacro:property name="lidar_y"      value="0.0"/>
+  <xacro:property name="lidar_z"      value="0.30"/>   <!-- scan plane height -->
+  <xacro:property name="lidar_radius" value="0.0375"/> <!-- 7.5 cm diameter puck -->
+  <xacro:property name="lidar_height" value="0.055"/>
+  <xacro:property name="lidar_mass"   value="0.19"/>
+
+  <material name="lidar_blue"><color rgba="0.05 0.25 0.6 1"/></material>
+
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="lidar_link"/>
+    <origin xyz="${lidar_x} ${lidar_y} ${lidar_z}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="lidar_link">
+    <visual>
+      <origin xyz="0 0 ${-lidar_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
+      <material name="lidar_blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${-lidar_height/2}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
+    </collision>
+    <xacro:inertial_cylinder mass="${lidar_mass}"
+                             length="${lidar_height}" radius="${lidar_radius}">
+      <origin xyz="0 0 ${-lidar_height/2}" rpy="0 0 0"/>
+    </xacro:inertial_cylinder>
+  </link>
+
+</robot>

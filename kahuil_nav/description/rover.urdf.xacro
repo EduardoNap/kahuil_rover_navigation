@@ -1,0 +1,146 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rover">
+
+  <!-- Args mirror the wheeled / tracked robots so launch files can pass them in -->
+  <xacro:arg name="use_ros2_control" default="true"/>
+  <xacro:arg name="sim_mode"         default="false"/>
+
+  <xacro:include filename="inertial_macros.xacro"/>
+
+  <!-- ========== REAL ROBOT MEASUREMENTS ========== -->
+  <!-- Wheels -->
+  <xacro:property name="wheel_radius"     value="0.065"/>   <!-- 6.5 cm -->
+  <xacro:property name="wheel_width"      value="0.05"/>    <!-- 5 cm -->
+  <xacro:property name="wheel_mass"       value="1.0"/>     <!-- kg -->
+  <xacro:property name="wheel_separation" value="0.53"/>    <!-- 53 cm, center-to-center (left↔right) -->
+  <xacro:property name="wheelbase"        value="0.43"/>    <!-- 43 cm, center-to-center (front↔back) -->
+
+  <!-- Chassis (body box) -->
+  <xacro:property name="chassis_length"   value="0.40"/>    <!-- 40 cm -->
+  <xacro:property name="chassis_width"    value="0.37"/>    <!-- 37 cm -->
+  <xacro:property name="chassis_height"   value="0.03"/>    <!-- 3 cm (thin plate) -->
+  <xacro:property name="chassis_mass"     value="6.0"/>     <!-- kg -->
+  <!-- Chassis bottom sits 11.5 cm above the wheel-axle plane (= base_link height) -->
+  <xacro:property name="chassis_bottom_z" value="0.115"/>
+  <xacro:property name="chassis_center_z" value="${chassis_bottom_z + chassis_height/2}"/>
+
+  <!-- Derived: half-distances for wheel joint origins -->
+  <xacro:property name="wheel_x" value="${wheelbase/2}"/>        <!-- 0.215 -->
+  <xacro:property name="wheel_y" value="${wheel_separation/2}"/> <!-- 0.265 -->
+
+  <!-- ========== MATERIALS ========== -->
+  <material name="chassis_grey"><color rgba="0.4 0.4 0.4 1"/></material>
+  <material name="wheel_dark"  ><color rgba="0.15 0.15 0.15 1"/></material>
+
+  <!-- ========== ROOT: base_footprint ========== -->
+  <!-- base_footprint sits on the ground (z=0).
+       base_link is at the wheel-axle plane (z = wheel_radius). -->
+  <link name="base_footprint" />
+  <joint name="base_footprint_to_base_link" type="fixed">
+    <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0" />
+    <parent link="base_footprint" />
+    <child link="base_link" />
+  </joint>
+
+  <!-- ========== BASE LINK (chassis box) ========== -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${chassis_center_z}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+      <material name="chassis_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${chassis_center_z}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+    </collision>
+    <xacro:inertial_box mass="${chassis_mass}"
+                        x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">
+      <origin xyz="0 0 ${chassis_center_z}" rpy="0 0 0"/>
+    </xacro:inertial_box>
+  </link>
+
+  <!-- ========== WHEEL MACRO ==========
+       Wheel cylinder axis is along the wheel y (axle); we rotate it with rpy
+       so the cylinder lies horizontally with the axle along the world Y. -->
+  <xacro:macro name="wheel" params="prefix x_pos y_pos">
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+        <material name="wheel_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <xacro:inertial_cylinder mass="${wheel_mass}"
+                               length="${wheel_width}" radius="${wheel_radius}">
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      </xacro:inertial_cylinder>
+    </link>
+  </xacro:macro>
+
+  <!-- ========== WHEELS ==========
+       Front wheels are the controlled joints (declared in ros2_control).
+       Back wheels mimic the front (RViz visualization only). -->
+  <xacro:wheel prefix="left_front"  x_pos="${wheel_x}"  y_pos="${wheel_y}"/>
+  <xacro:wheel prefix="right_front" x_pos="${wheel_x}"  y_pos="${-wheel_y}"/>
+  <xacro:wheel prefix="left_back"   x_pos="${-wheel_x}" y_pos="${wheel_y}"/>
+  <xacro:wheel prefix="right_back"  x_pos="${-wheel_x}" y_pos="${-wheel_y}"/>
+
+  <joint name="left_front_wheel_joint" type="continuous">
+    <origin xyz="${wheel_x} ${wheel_y} 0"/>
+    <parent link="base_link"/><child link="left_front_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="100"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="right_front_wheel_joint" type="continuous">
+    <origin xyz="${wheel_x} ${-wheel_y} 0"/>
+    <parent link="base_link"/><child link="right_front_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="100"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="left_back_wheel_joint" type="continuous">
+    <origin xyz="${-wheel_x} ${wheel_y} 0"/>
+    <parent link="base_link"/><child link="left_back_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="100"/>
+    <dynamics damping="0.1" friction="0.1"/>
+    <mimic joint="left_front_wheel_joint" multiplier="1.0" offset="0"/>
+  </joint>
+
+  <joint name="right_back_wheel_joint" type="continuous">
+    <origin xyz="${-wheel_x} ${-wheel_y} 0"/>
+    <parent link="base_link"/><child link="right_back_wheel_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="100" velocity="100"/>
+    <dynamics damping="0.1" friction="0.1"/>
+    <mimic joint="right_front_wheel_joint" multiplier="1.0" offset="0"/>
+  </joint>
+
+  <!-- ========== ZED 2i mount ========== -->
+  <xacro:include filename="zed.xacro"/>
+
+  <!-- ========== RPLidar mount ========== -->
+  <xacro:include filename="lidar.xacro"/>
+
+  <!-- TODO: add imu mount once its position is measured -->
+
+  <!-- ========== ros2_control hardware ========== -->
+  <xacro:if value="$(arg use_ros2_control)">
+      <xacro:include filename="rover_ros2_control.xacro"/>
+  </xacro:if>
+
+</robot>
